@@ -1,5 +1,4 @@
 # Auto detect text files and perform LF normalization
-* text=auto
 *.c linguist-language=objective-c
 *.h linguist-language=objective-c
 *.m linguist-language=objective-c
