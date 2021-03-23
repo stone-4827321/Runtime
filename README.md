@@ -1,13 +1,17 @@
 # 概述
 
 - Objective-C 是一门动态语言，因为它总是把一些决定性的工作从编译阶段推迟到运行时阶段。Objective-C 代码的运行不仅需要编译器，还需要运行时系统（Runtime Sytem）来执行编译后的代码（在编译期并不能决定真正调用哪个函数，只有在真正运行时才会根据函数的名称找到对应的函数来调用）。
+
   - 静态语言：如 C 语言，编译阶段就要决定调用哪个函数，如果函数未实现就会编译报错。
+  
   - 动态语言：如 Objective-C 语言，编译阶段并不能决定真正调用哪个函数，只有函数声明而没有实现也不会报错。
 
 - Runtime 又叫运行时，是一套底层的 C 语言 API，是 iOS 系统的核心之一。**开发者在编码过程中，可以给任意一个对象发送消息，在编译阶段只是确定了要向接收者发送这条消息，而接收者将要如何响应和处理这条消息，那就要看运行时来决定了**。
 
 - Objective-C 在三种层面上与 Runtime 系统进行交互：
+
     - 通过 Objective-C 源代码：一般情况开发者只需要编写 Objective-C 代码即可，Runtime 系统自动在幕后把源代码在编译阶段转换成运行时代码，在运行时确定对应的数据结构和调用具体哪个方法；
+    
     - 通过 Foundation 框架的 NSObject 类定义的方法（内省方法：对象揭示自己作为一个运行时对象的详细信息的一种能力）；
 
     ```objective-c
@@ -79,7 +83,9 @@
 - OC的类的信息（方法、属性、成员变量等等）分别存放在哪？
 
   - 实例对象的方法、属性、成员变量、协议信息等等存放在 class 类对象中；
+  
   - 类方法存放在 mata-class 元类对象中；
+  
   - 成员变量的具体值存放在实例对象中，因为成员变量的描述信息，如类型等，在内存中只需存储一份，所以将属性描述信息存放在类对象中，但是成员变量的值每个实例变量都不相同，所以每个实例对象存放一份。
 
   ![](/Users/3kmac/Desktop/我的文档/图片/isa.png)
@@ -87,13 +93,17 @@
 - 如何找到执行的方法？
 
   - **对象的实例方法调用时，通过对象的 isa 在类中获取方法的实现。**
+  
   - **类对象的类方法调用时，通过类的 isa 在元类中获取方法的实现。**
+  
   - 对象的父类的实例方法调用时，会先通过对象的 isa 找到类，然后通过 superclass 找到父类，最后找到实例方法的实现进行调用。
+  
   - 对象的父类的类方法调用时，会先通过类的 isa 找到元类，然后通过 superclass 找到父元类，最后找到类方法的实现进行调用。
 
 - 总结：图中实线是 `super_class` 指针，虚线是 `isa` 指针。class 指类，meta-class 指基类。
 
   - instance 的 `isa` 指向 class，class 的 `isa` 指向 meta-class，mate-class 的 `isa` 都指向基类（Root class）的 meta-clasee，基类的 `isa` 指向自己；
+  
   - class 的 `super_class` 指向父类的 class，meta-class 的 `superclass` 指向父类的 meta-class，基类的meta-class 的 `superclass` 指向基类的 class。
 
 ![](/Users/3kmac/Desktop/我的文档/图片/isa&superclass.png)
@@ -305,12 +315,15 @@
   ```
 
   - 内存偏移顺序为：h文件的 ivar -> m文件的 ivar -> h文件的 property 基本类型 -> m文件的 property 对象类型。
+  
   - 第一个成员变量的偏移地址总是8，因为从内存中 0-8 的位置是 isa 指针。
 
 - 有三种方式来获取一个对象（类型）的内存大小。
 
     - `sizeof`：计算类型所占用的内存空间；
+    
     - `class_getInstanceSize`：创建对象申请的内存大小；
+    
     - `malloc_size`：系统为该对象实际开辟的内存大小。
 
     ```
@@ -320,8 +333,11 @@
     ```
 
 - 结构体的内存对齐规则：
+
     - 第一个成员的首地址为0；
+    
     - 每个成员的首地址是自身大小的整数倍；
+    
     - 结构体的内存总大小是其成员中所含最大类型的整数倍。
 
     ![](https://tva1.sinaimg.cn/large/008eGmZEgy1gnewweaw1wj307n0ardfp.jpg)
@@ -500,8 +516,11 @@
 ## 分类 Category
 
 - 分类主要有3个作用：
+
   - 将类的实现分散到多个不同文件或多个不同框架中，既可以减少单个文件的体积，又可以按需加载所需的 分类；
+  
   - 创建对私有方法的前向引用（只要知道对象支持的某个方法的名称，即使该对象所在的类的接口中没有该方法的声明，也可以调用该方法。不过这么做编译器会报错，但是只要新建一个该类的类别，在类别.h文件中写上原始类该方法的声明，类别.m文件中什么也不写，就可以正常调用私有方法了）；
+  
   - 声明私有方法（定义在 .m 文件中的类扩展方法为私有的）；
 
 - **实现原理**：将分类中的方法，属性，协议数据放在 `category_t` 结构体中，在运行时会将结构体内的列表拷贝到类对象的列表中。
@@ -540,6 +559,7 @@
 - 分类可以添加属性，但因为 `category_t` 结构体中并不存在成员变量，所以并不会自动生成成员变量及 set/get 方法。成员变量是存放在实例对象中的，并且编译的那一刻就已经决定好了，而分类是在运行时才去加载的，无法在程序运行时将分类的成员变量中添加到实例对象的结构体中。
 
   - 编译后的类已经注册在 Runtime 中，类结构体中的 objc_ivar_list 实例变量的链表和 instance_size 实例变量的内存大小已经确定，同时 Runtime 会调用 `class_setIvarLayout` 和 `class_setWeakIvarLayout` 来处理 strong 和 weak 引用。
+  
   - 可以借助**关联对象**来实现：
 
   ```objective-c
@@ -559,16 +579,23 @@
   ```
 
   - 内存管理策略：
+  
     - ` OBJC_ASSOCIATION_ASSIGN = 0` = `@property (assign)` /`@property (unsafe_unretained)`
+    
     - `OBJC_ASSOCIATION_RETAIN_NONATOMIC = 1`  = `@property (nonatomic, strong)`
+    
     - `OBJC_ASSOCIATION_COPY_NONATOMIC = 3` = `@property (nonatomic, copy)`
+    
     - `OBJC_ASSOCIATION_RETAIN = 01401` = `@property (atomic, strong)`
+    
     - `OBJC_ASSOCIATION_COPY = 01403`  = `@property (atomic, copy)`
 
   - 关联对象并不是放在了原来的对象里面，而是维护了一个全局的 map 用来存放每一个对象及其对应关联属性表格。
 
 - 扩展 Extension 和 分类 Category 的区别：
+
   - Category 原则上只能增加方法；Extension 不仅可以增加方法，还可以增加实例变量或者属性（默认是 @private 类型的，作用范围只能在自身类，而不是子类或其他地方）；
+  
   - Extension 中声明的方法没被实现，编译器会警告；Category 中的方法没被实现编译器是不会有任何警告的。这是因为类扩展是在编译阶段被添加到类中，而类别是在运行时添加到类中。
 
 ## 方法交换 Method swizzling
@@ -619,6 +646,7 @@
 - **swizzling 应该只在 `+load` 中完成**。
 
   - 在 Objective-C 的运行时中，每个类有两个方法都会自动调用。`+load` 是在一个类被初始装载时调用，`+initialize` 是在应用第一次调用该类的类方法或实例方法前调用的，是懒加载的；
+  
   - 子类、父类和分类中的 `+load` 方法的实现是被区别对待的，即分类中的 `+load` 方法并不会对主类中的 `+load` 方法造成覆盖。
 
 - **swizzling 应该只在 dispatch_once 中完成**。
@@ -628,14 +656,18 @@
 ## 消息转发
 
 - Objective-C 的方法调用都是类似 `[receiver selector]` 的形式，是一个运行时消息发送过程：
+
     - 第一步：**编译阶段**
       `[receiver selector]` 方法被编译器转化为 `objc_msgSend(id _Nullable self, SEL _Nonnull op, ...)`。
 
       > 消息发送的方法还有 `objc_msgSendSuper` （发送给父类）、`objc_msgSend_stret` （返回值为结构体），`objc_msgSendSuper_stret`（发送给父类，返回值为结构体） 等。
 
     - 第二步：**运行时阶段**
+    
       - 检测 selector 是不是要忽略；
+      
       - 检测 target 是不是 nil；
+      
       - 按 **cache -> methodLists -> 父类的 cache -> 父类的 methodLists** 的顺序查找对应的 IMP，找到就进行方法执行。
     > 说明：编译阶段确定了要向哪个接收者发送消息，而运行时阶段决定了接收者如何响应消息。
 
@@ -689,6 +721,7 @@
 - **消息重定向**：
 
     - 获取方法签名 `NSMethodSignature`，封装方法的返回值类型信息以及参数类型信息；
+    
     - 利用 `NSMethodSignature` 对象中的信息，封装成 `NSInvocation` 对象，包含保存了方法所属的对象、方法名称、参数和返回值等。
 
     ```objective-c
@@ -743,7 +776,9 @@
 - Aspects 是利用消息转发机制实现方法交换的工具。
 
   - 新建一个 `aspects_originalSelector` 指向原来的 `originalSelector` 的方法实现；
+  
   - 原来的 `originalSelector` 指向 `_objc_msgForward` 的方法实现；
+  
   - 侵入方法实现在 `__ASPECTS_ARE_BEING_CALLED__` 中，原来的 `forwardInvacation` 指向 `__ASPECTS_ARE_BEING_CALLED__`。
 
   - 调用过程：`originalSelector` -> `_objc_msgForward` -> `forwardInvacation` -> `__ASPECTS_ARE_BEING_CALLED__`。
